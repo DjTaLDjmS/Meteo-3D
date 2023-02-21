@@ -29,12 +29,6 @@ public class SearchProvider : MonoBehaviour
     [SerializeField]
     private TMP_Text OutputField;
 
-    //[SerializeField]
-    //private float Latitude;
-
-    //[SerializeField]
-    //private float Longitude;
-
     [SerializeField]
     private Toggle ForecastMeteoToggle;
 
@@ -60,15 +54,6 @@ public class SearchProvider : MonoBehaviour
     {
 
     }
-
-    //void OnMouseDown()
-    //{
-    //    InteractWithSphere interact = new InteractWithSphere();
-    //    longLat = interact.GetLocation();
-    //    Longitude = longLat.x;
-    //    Latitude = longLat.y;
-    //    GetMeteoCoordinates();
-    //}
     
     public void ReadStringInput(string textField)
     {

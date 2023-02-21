@@ -28,11 +28,6 @@ public class InteractWithSphere : MonoBehaviour
         gameObject.GetComponent<SearchProvider>().GetMeteoCoordinates(longLat.x, longLat.y);
     }
 
-    public Vector2 GetLocation()
-    {
-        return longLat;
-    }
-
     public Vector2 ToSpherical(Vector3 position)
     {
         // Convert to a unit vector so our y coordinate is in the range -1...1.
@@ -54,7 +49,7 @@ public class InteractWithSphere : MonoBehaviour
         //Debug.Log(lat + ", " + lon);
 
         // I usually put longitude first because I associate vector.x with "horizontal."
-        return new Vector2(lon, lat);
+        return new Vector2(lat, lon);
     }
 
     void Update()
