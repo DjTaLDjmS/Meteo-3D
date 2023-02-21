@@ -10,6 +10,7 @@ using TMPro;
 using UnityEngine.Networking;
 using Unity.VisualScripting;
 using static SearchProvider;
+using static UnityEngine.Rendering.DebugUI;
 
 public class SearchProvider : MonoBehaviour
 {
@@ -28,14 +29,16 @@ public class SearchProvider : MonoBehaviour
     [SerializeField]
     private TMP_Text OutputField;
 
-    [SerializeField]
-    private double Latitude;
+    //[SerializeField]
+    //private float Latitude;
 
-    [SerializeField]
-    private double Longitude;
+    //[SerializeField]
+    //private float Longitude;
 
     [SerializeField]
     private Toggle ForecastMeteoToggle;
+
+    Vector2 longLat;
 
     private enum MeteoType
     {
@@ -58,6 +61,15 @@ public class SearchProvider : MonoBehaviour
 
     }
 
+    //void OnMouseDown()
+    //{
+    //    InteractWithSphere interact = new InteractWithSphere();
+    //    longLat = interact.GetLocation();
+    //    Longitude = longLat.x;
+    //    Latitude = longLat.y;
+    //    GetMeteoCoordinates();
+    //}
+    
     public void ReadStringInput(string textField)
     {
         if (textField.Length >= 3)
@@ -124,20 +136,18 @@ public class SearchProvider : MonoBehaviour
         }
     }
 
-    public void GetMeteoCoordinates()
+    public void GetMeteoCoordinates(float latitude, float longitude)
     {
-        string city = CitySelect.options[CitySelect.value].text;
-
         if (!ForecastMeteoToggle.isOn)
         {
-            string queryActualMeteo = "https://api.openweathermap.org/data/2.5/weather?lat=" + Latitude + "&lon=" + Longitude +
+            string queryActualMeteo = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude +
             "&units=metric&lang=fr&appid=" + apiKey;
 
             StartCoroutine(GetMeteoRequest(queryActualMeteo, MeteoType.Actual));
         }
         else
         {
-            string queryForecastMeteo = "https://api.openweathermap.org/data/2.5/forecast?lat=" + Latitude + "&lon=" + Longitude +
+            string queryForecastMeteo = "https://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude +
                 "&units=metric&lang=fr&appid=" + apiKey;
 
             StartCoroutine(GetMeteoRequest(queryForecastMeteo, MeteoType.Forecast));
@@ -173,7 +183,7 @@ public class SearchProvider : MonoBehaviour
                             DisplayActualMeteo(actualMeteoData);
                             break;
                         case MeteoType.Forecast:
-                            Meteo forecastMeteoData = JsonConvert.DeserializeObject<Meteo>(webRequest.downloadHandler.text);
+                            MeteoList forecastMeteoData = JsonConvert.DeserializeObject<MeteoList>(webRequest.downloadHandler.text);
                             DisplayForecastMeteo(forecastMeteoData);
                             break;
                         default:
@@ -193,11 +203,17 @@ public class SearchProvider : MonoBehaviour
         OutputField.text = textTemperature + "\n" + textDescription + "\n" + textWindSpeed;
     }
 
-    private void DisplayForecastMeteo(Meteo meteoData)
+    private void DisplayForecastMeteo(MeteoList meteoData)
     {
-        string textTemperature = "Température : " + meteoData.main.temp.ToString() + "°C";
-        string textDescription = "Temps : " + meteoData.weather.ElementAt(0).description;
-        OutputField.text = textTemperature + "\n" + textDescription;
+        List<Meteo> meteoByDay = meteoData.list.Where(meteo => meteo.dateMeteo.Hour == 12).ToList();
+        OutputField.text = String.Empty;
+        foreach (var meteo in meteoByDay)
+        {
+            string textDayMeteo = meteo.dateMeteo.ToLongDateString();
+            string textTemperature = "Température : " + meteo.main.temp.ToString() + "°C";
+            string textDescription = "Temps : " + meteo.weather.ElementAt(0).description;
+            OutputField.text += textDayMeteo + "\n" + textTemperature + "\n" + textDescription + "\n\n";
+        }
     }
 
     public class City
@@ -205,12 +221,16 @@ public class SearchProvider : MonoBehaviour
         public string name { get; set; }
         public string country { get; set; }
         public Coordinates coord { get; set; }
+        public class Coordinates
+        {
+            public double lon { get; set; }
+            public double lat { get; set; }
+        }
     }
 
-    public class Coordinates
+    public class MeteoList
     {
-        public double lon { get; set; }
-        public double lat { get; set; }
+        public List<Meteo> list { get; set; }
     }
 
     public class Meteo
@@ -218,6 +238,19 @@ public class SearchProvider : MonoBehaviour
         public Temperature main { get; set; }
         public List<Weather> weather { get; set; }
         public Wind wind { get; set; }
+        public DateTime dateMeteo { get; set; }
+
+        private string dt_txt;
+        public string Dt_txt
+        {
+            get { return dt_txt; }
+            set { 
+                dt_txt = value;
+                dateMeteo = DateTime.ParseExact(dt_txt, "yyyy-MM-dd HH:mm:ss", null);
+            }
+        }
+
+        public City city { get; set; }
 
         public class Temperature
         {
@@ -231,6 +264,11 @@ public class SearchProvider : MonoBehaviour
         public class Wind
         {
             public double speed { get; set; }
+        }
+
+        public class City
+        {
+            public string Name { get; set; }
         }
     }
 }
