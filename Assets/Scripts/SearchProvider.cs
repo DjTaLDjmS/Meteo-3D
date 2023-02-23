@@ -32,7 +32,13 @@ public class SearchProvider : MonoBehaviour
     [SerializeField]
     private Toggle ForecastMeteoToggle;
 
-    Vector2 longLat;
+    [SerializeField]
+    private Panel PanelText;
+
+    //true pour une recherche textuelle, false pour une recherche par coordonnées
+    private bool lastSearchCityName;
+
+    private Vector2 lastLongLat;
 
     private enum MeteoType
     {
@@ -47,12 +53,6 @@ public class SearchProvider : MonoBehaviour
         cityObjectList = JsonConvert.DeserializeObject<List<City>>(cityDatas);
         cityList = cityObjectList.Select(city => char.ToUpper(city.name[0]) + city.name.Substring(1)).ToList();
         apiKey = File.ReadAllText(@"Assets\Scripts\apiKey.txt");
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 
     public void ReadStringInput(string textField)
@@ -97,16 +97,27 @@ public class SearchProvider : MonoBehaviour
         }
     }
 
+    public void GetMeteoToggleButton()
+    {
+        if  (lastSearchCityName)
+        {
+            GetMeteoCityName();
+        }
+        else
+        {
+            GetMeteoCoordinates(lastLongLat.x, lastLongLat.y);
+        }
+    }
+
     public void GetMeteoCityName()
     {
         string city = CitySelect.options[CitySelect.value].text;
-
+        InputField.text = city;
 
         if (!ForecastMeteoToggle.isOn)
         {
             string queryActualMeteo = "https://api.openweathermap.org/data/2.5/weather?q=" + city +
                 "&units=metric&lang=fr&appid=" + apiKey;
-
             StartCoroutine(GetMeteoRequest(queryActualMeteo, MeteoType.Actual));
         }
         else
@@ -116,7 +127,9 @@ public class SearchProvider : MonoBehaviour
 
             StartCoroutine(GetMeteoRequest(queryForecastMeteo, MeteoType.Forecast));
         }
-    }
+
+        lastSearchCityName = true;
+}
 
     public void GetMeteoCoordinates(float latitude, float longitude)
     {
@@ -134,6 +147,10 @@ public class SearchProvider : MonoBehaviour
 
             StartCoroutine(GetMeteoRequest(queryForecastMeteo, MeteoType.Forecast));
         }
+
+        lastSearchCityName = false;
+        lastLongLat = new Vector2(latitude, longitude);
+        ClearSearch();
     }
 
     IEnumerator GetMeteoRequest(string uri, MeteoType meteoType)
@@ -163,6 +180,7 @@ public class SearchProvider : MonoBehaviour
                         case MeteoType.Actual:
                             Meteo actualMeteoData = JsonConvert.DeserializeObject<Meteo>(webRequest.downloadHandler.text);
                             DisplayActualMeteo(actualMeteoData);
+                            //PanelText.
                             break;
                         case MeteoType.Forecast:
                             MeteoList forecastMeteoData = JsonConvert.DeserializeObject<MeteoList>(webRequest.downloadHandler.text);
