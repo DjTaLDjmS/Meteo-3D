@@ -54,35 +54,32 @@ public class SearchProvider : MonoBehaviour
     {
 
     }
-    
+
     public void ReadStringInput(string textField)
     {
         if (textField.Length >= 3)
         {
             List<string> cities = cityList.Where(city => city.ToLower().StartsWith(textField.ToLower())).ToList();
 
-            if (cities != null)
+            if (cities.Count >= 0)
             {
-                if (cities.Count >= 1)
+                CitySelect.options.Clear();
+                CitySelect.value = -1;
+
+                //Display DropDownList
+                foreach (var city in cities)
                 {
-                    CitySelect.options.Clear();
-                    CitySelect.value = -1;
+                    CitySelect.options.Add(new TMP_Dropdown.OptionData() { text = city });
+                }
 
-                    //Display DropDownList
-                    foreach (var city in cities)
-                    {
-                        CitySelect.options.Add(new TMP_Dropdown.OptionData() { text = city });
-                    }
-
-                    if (cities.Count <= 20)
-                    {
-                        CitySelect.Hide();
-                        CitySelect.Show();
-                    }
-                    else
-                    {
-                        CitySelect.Hide();
-                    }
+                if (cities.Count <= 20)
+                {
+                    CitySelect.Hide();
+                    CitySelect.Show();
+                }
+                else
+                {
+                    CitySelect.Hide();
                 }
             }
             else
@@ -90,7 +87,6 @@ public class SearchProvider : MonoBehaviour
                 CitySelect.options.Clear();
                 CitySelect.Hide();
             }
-
 
             InputField.Select();
             InputField.caretPosition = InputField.text.Length;
@@ -104,6 +100,7 @@ public class SearchProvider : MonoBehaviour
     public void GetMeteoCityName()
     {
         string city = CitySelect.options[CitySelect.value].text;
+
 
         if (!ForecastMeteoToggle.isOn)
         {
@@ -179,19 +176,31 @@ public class SearchProvider : MonoBehaviour
         }
     }
 
+    public void ClearSearch()
+    {
+        OutputField.text = string.Empty;
+        InputField.text = string.Empty;
+        CitySelect.ClearOptions();
+        CitySelect.value = -1;
+        CitySelect.Hide();
+    }
+
     private void DisplayActualMeteo(Meteo meteoData)
     {
+        OutputField.text = String.Empty;
+        string textCity = "Ville : " + meteoData.name;
         string textTemperature = "Température : " + meteoData.main.temp.ToString() + "°C";
         string textDescription = "Temps : " + meteoData.weather.ElementAt(0).description;
         double wind = meteoData.wind.speed * 3.6;
         string textWindSpeed = "Vent : " + wind.ToString() + "km/h";
-        OutputField.text = textTemperature + "\n" + textDescription + "\n" + textWindSpeed;
+        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n" : "") + textTemperature + "\n" + textDescription + "\n" + textWindSpeed;
     }
 
     private void DisplayForecastMeteo(MeteoList meteoData)
     {
         List<Meteo> meteoByDay = meteoData.list.Where(meteo => meteo.dateMeteo.Hour == 12).ToList();
-        OutputField.text = String.Empty;
+        string textCity = "Ville : " + meteoData.city.name;
+        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n" : "");
         foreach (var meteo in meteoByDay)
         {
             string textDayMeteo = meteo.dateMeteo.ToLongDateString();
@@ -216,6 +225,7 @@ public class SearchProvider : MonoBehaviour
     public class MeteoList
     {
         public List<Meteo> list { get; set; }
+        public City city { get; set; }
     }
 
     public class Meteo
@@ -224,12 +234,14 @@ public class SearchProvider : MonoBehaviour
         public List<Weather> weather { get; set; }
         public Wind wind { get; set; }
         public DateTime dateMeteo { get; set; }
+        public string name { get; set; }
 
         private string dt_txt;
         public string Dt_txt
         {
             get { return dt_txt; }
-            set { 
+            set
+            {
                 dt_txt = value;
                 dateMeteo = DateTime.ParseExact(dt_txt, "yyyy-MM-dd HH:mm:ss", null);
             }
