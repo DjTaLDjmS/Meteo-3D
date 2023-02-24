@@ -1029,7 +1029,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &584240923
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3077,6 +3077,7 @@ MonoBehaviour:
   InputField: {fileID: 1809529022}
   OutputField: {fileID: 1799556381}
   ForecastMeteoToggle: {fileID: 625859105}
+  PanelText: {fileID: 584240922}
 --- !u!1 &1973558516
 GameObject:
   m_ObjectHideFlags: 0

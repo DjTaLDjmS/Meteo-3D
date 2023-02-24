@@ -183,7 +183,7 @@ public class SearchProvider : MonoBehaviour
                         case MeteoType.Actual:
                             Meteo actualMeteoData = JsonConvert.DeserializeObject<Meteo>(webRequest.downloadHandler.text);
                             DisplayActualMeteo(actualMeteoData);
-                            PanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(295, 130);
+                            PanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(295, 140);
                             PanelText.gameObject.SetActive(true);
                             break;
                         case MeteoType.Forecast:
