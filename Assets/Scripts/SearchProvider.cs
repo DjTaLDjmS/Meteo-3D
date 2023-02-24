@@ -33,7 +33,7 @@ public class SearchProvider : MonoBehaviour
     private Toggle ForecastMeteoToggle;
 
     [SerializeField]
-    private Panel PanelText;
+    private GameObject PanelText;
 
     //true pour une recherche textuelle, false pour une recherche par coordonnées
     private bool lastSearchCityName;
@@ -64,6 +64,7 @@ public class SearchProvider : MonoBehaviour
             if (cities.Count >= 0)
             {
                 CitySelect.options.Clear();
+                CitySelect.gameObject.SetActive(true);
                 CitySelect.value = -1;
 
                 //Display DropDownList
@@ -86,6 +87,7 @@ public class SearchProvider : MonoBehaviour
             {
                 CitySelect.options.Clear();
                 CitySelect.Hide();
+                CitySelect.gameObject.SetActive(false);
             }
 
             InputField.Select();
@@ -94,6 +96,7 @@ public class SearchProvider : MonoBehaviour
         else
         {
             CitySelect.options.Clear();
+            CitySelect.gameObject.SetActive(false);
         }
     }
 
@@ -129,7 +132,7 @@ public class SearchProvider : MonoBehaviour
         }
 
         lastSearchCityName = true;
-}
+    }
 
     public void GetMeteoCoordinates(float latitude, float longitude)
     {
@@ -180,11 +183,14 @@ public class SearchProvider : MonoBehaviour
                         case MeteoType.Actual:
                             Meteo actualMeteoData = JsonConvert.DeserializeObject<Meteo>(webRequest.downloadHandler.text);
                             DisplayActualMeteo(actualMeteoData);
-                            //PanelText.
+                            PanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(295, 130);
+                            PanelText.gameObject.SetActive(true);
                             break;
                         case MeteoType.Forecast:
                             MeteoList forecastMeteoData = JsonConvert.DeserializeObject<MeteoList>(webRequest.downloadHandler.text);
                             DisplayForecastMeteo(forecastMeteoData);
+                            PanelText.GetComponent<RectTransform>().sizeDelta = new Vector2(295, 470);
+                            PanelText.gameObject.SetActive(true);
                             break;
                         default:
                             break;
@@ -201,24 +207,26 @@ public class SearchProvider : MonoBehaviour
         CitySelect.ClearOptions();
         CitySelect.value = -1;
         CitySelect.Hide();
+        CitySelect.gameObject.SetActive(false);
+        PanelText.gameObject.SetActive(false);
     }
 
     private void DisplayActualMeteo(Meteo meteoData)
     {
         OutputField.text = String.Empty;
-        string textCity = "Ville : " + meteoData.name;
+        string textCity = "Ville : " + (!String.IsNullOrWhiteSpace(meteoData.name) ? meteoData.name : "N/A");
         string textTemperature = "Température : " + meteoData.main.temp.ToString() + "°C";
         string textDescription = "Temps : " + meteoData.weather.ElementAt(0).description;
         double wind = meteoData.wind.speed * 3.6;
         string textWindSpeed = "Vent : " + wind.ToString() + "km/h";
-        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n" : "") + textTemperature + "\n" + textDescription + "\n" + textWindSpeed;
+        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n\n" : "") + textTemperature + "\n" + textDescription + "\n" + textWindSpeed;
     }
 
     private void DisplayForecastMeteo(MeteoList meteoData)
     {
         List<Meteo> meteoByDay = meteoData.list.Where(meteo => meteo.dateMeteo.Hour == 12).ToList();
-        string textCity = "Ville : " + meteoData.city.name;
-        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n" : "");
+        string textCity = "Ville : " + (!String.IsNullOrWhiteSpace(meteoData.city.name) ? meteoData.city.name : "N/A");
+        OutputField.text = (!String.IsNullOrEmpty(textCity) ? textCity + "\n\n" : "");
         foreach (var meteo in meteoByDay)
         {
             string textDayMeteo = meteo.dateMeteo.ToLongDateString();
