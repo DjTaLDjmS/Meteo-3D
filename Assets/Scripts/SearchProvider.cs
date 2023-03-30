@@ -35,6 +35,9 @@ public class SearchProvider : MonoBehaviour
     [SerializeField]
     private GameObject PanelText;
 
+    [SerializeField]
+    private TMP_Text FilePath;
+
     //true pour une recherche textuelle, false pour une recherche par coordonnées
     private bool lastSearchCityName;
 
@@ -49,10 +52,27 @@ public class SearchProvider : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        string cityDatas = File.ReadAllText(@"Assets\Data\city.list.json");
+
+        string cityDatas = String.Empty;
+
+#if UNITY_STANDALONE
+        cityDatas = File.ReadAllText(Application.streamingAssetsPath + @"\city.list.json");
         cityObjectList = JsonConvert.DeserializeObject<List<City>>(cityDatas);
         cityList = cityObjectList.Select(city => char.ToUpper(city.name[0]) + city.name.Substring(1)).ToList();
-        apiKey = File.ReadAllText(@"Assets\Scripts\apiKey.txt");
+        apiKey = File.ReadAllText(Application.streamingAssetsPath + @"\apiKey.txt");
+#endif
+#if UNITY_EDITOR
+        cityDatas = File.ReadAllText(Application.streamingAssetsPath + @"\city.list.json");
+        cityObjectList = JsonConvert.DeserializeObject<List<City>>(cityDatas);
+        cityList = cityObjectList.Select(city => char.ToUpper(city.name[0]) + city.name.Substring(1)).ToList();
+        apiKey = File.ReadAllText(Application.streamingAssetsPath + @"\apiKey.txt");
+#endif
+#if UNITY_WEBGL
+        //UnityWebRequest
+        Debug.Log(Application.streamingAssetsPath);
+        StartCoroutine(GetCityNamesRequest(Application.streamingAssetsPath + "/city.list.json"));
+        StartCoroutine(GetAPIKeyRequest(Application.streamingAssetsPath + "/apiKey.txt"));
+#endif
     }
 
     public void ReadStringInput(string textField)
@@ -199,6 +219,60 @@ public class SearchProvider : MonoBehaviour
             }
         }
     }
+
+    IEnumerator GetCityNamesRequest(string uri)
+    {
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
+        {
+            // Request and wait for the desired page.
+            yield return webRequest.SendWebRequest();
+
+            string[] pages = uri.Split('/');
+            int page = pages.Length - 1;
+
+            switch (webRequest.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                    Debug.LogError(pages[page] + ": Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.Success:
+                    cityObjectList = JsonConvert.DeserializeObject<List<City>>(webRequest.downloadHandler.text);
+                    cityList = cityObjectList.Select(city => char.ToUpper(city.name[0]) + city.name.Substring(1)).ToList();
+                    break;
+            }
+        }
+    }
+
+    IEnumerator GetAPIKeyRequest(string uri)
+    {
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
+        {
+            // Request and wait for the desired page.
+            yield return webRequest.SendWebRequest();
+
+            string[] pages = uri.Split('/');
+            int page = pages.Length - 1;
+
+            switch (webRequest.result)
+            {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                    Debug.LogError(pages[page] + ": Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.Success:
+                    apiKey = webRequest.downloadHandler.text.Substring(1);
+                    break;
+            }
+        }
+    }
+
 
     public void ClearSearch()
     {
